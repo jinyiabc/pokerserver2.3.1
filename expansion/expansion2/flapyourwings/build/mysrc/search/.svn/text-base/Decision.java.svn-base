@@ -1,0 +1,6 @@
+package mysrc.search;
+
+public enum Decision {
+
+	FOLD, CHECK_CALL, BET_RAISE;
+}

@@ -1,0 +1,40 @@
+package mysrc.search;
+
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.LinkedList;
+
+import ke.client.ClientRingDynamics;
+import ca.ualberta.cs.poker.free.dynamics.Card;
+
+public abstract class Node {
+
+	protected static int currentNodeCount = 0;
+	protected Double expectedValue = null;
+	protected int runs = 0;
+	protected int nodeID = 0;
+	
+	protected static NumberFormat nf = NumberFormat.getInstance();
+	
+	protected abstract double eval (GameState gameState, boolean debug);
+
+	public int getCurrentNodeCount() {
+		return currentNodeCount;
+	}
+
+	public double getExpectedValue() {
+		if (expectedValue == null)
+			return 0.0;
+		return expectedValue;
+	}
+	
+	public int getNodeID() {
+		return nodeID;
+	}
+	
+	public int getRuns() {
+		return runs;
+	}
+	
+	public abstract String toGraphvizString (int depth);
+}

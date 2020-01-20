@@ -1,0 +1,99 @@
+10
+
+dir
+0
+https://www.ke.tu-darmstadt.de/svn/bot_2/bots/allineq_player/build/ca/ualberta/cs/poker/free
+https://www.ke.tu-darmstadt.de/svn/bot_2
+add
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+06821c2b-6e64-4298-aa9a-86961ad016c3
+
+
+
+
+
+
+
+empty
+
+graph
+dir
+
+
+
+add
+
+server
+dir
+
+
+
+add
+
+dynamics
+dir
+
+
+
+add
+
+alien
+dir
+
+
+
+add
+
+academy25
+dir
+
+
+
+add
+
+statistics
+dir
+
+
+
+add
+
+ringseat
+dir
+
+
+
+add
+
+tournament
+dir
+
+
+
+add
+
+client
+dir
+
+
+
+add
+

@@ -1,0 +1,18 @@
+package mysrc;
+
+import ca.ualberta.cs.poker.free.dynamics.MatchType;
+import ke.client.ClientRingDynamics;
+import ke.client.ClientRingStateParser;
+
+public class MyClientRingDynamics extends ClientRingDynamics {
+
+	public MyClientRingDynamics(int numPlayers, MatchType info,
+			ClientRingStateParser parser) {
+		super(numPlayers, info, parser);
+	}
+	
+	public int getLastBetSize () {
+		return lastBetSize;
+	}
+
+}

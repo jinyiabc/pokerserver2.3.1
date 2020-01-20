@@ -1,0 +1,26 @@
+package mysrc.search;
+
+import java.util.ArrayList;
+
+import ca.ualberta.cs.poker.free.dynamics.Card;
+
+public class Hero extends Player {
+
+	public Hero (ArrayList<Card> holeCards) {
+		this.holeCards = holeCards;
+	}
+	
+	public Hero (Card[] holeCards) {
+		this.holeCards = new ArrayList<Card>();
+		for (Card card : holeCards)
+				this.holeCards.add(card);
+	}
+	
+	public DecisionTriple getDecisionTriple (GameState gameState) {
+		if (gameState.getMaxBetsizeThisRound() == 4)
+			return new DecisionTriple(0.5, 0.5, 0.0);
+		
+		return new DecisionTriple(0.10, 0.45, 0.45);
+	}
+
+}

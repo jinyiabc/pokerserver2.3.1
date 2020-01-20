@@ -1,0 +1,97 @@
+package ke.opponent;
+
+/**
+ * The Behaviour Checker
+ *
+ * @author Alex
+ */
+
+import ke.data.CONSTANT;
+import ke.data.GameState;
+import ke.history.GlobalRoundData;
+import ke.history.History;
+
+
+public class BehaviourChecker {
+	
+	private History history;
+	
+	public BehaviourChecker(History history) {
+		this.history = history;
+	}
+	
+	public Behaviour getGlobalBehaviour(int player) {		
+		return getBehaviourFromGlobalData(player, history.getGlobal());
+	}
+	
+	public Behaviour getBehaviourOfAggregated(int player) {
+		return getBehaviourFromGlobalData(player, history.getLastCompletedSumRounds());
+	}
+	
+	public Behaviour getBehaviourOfAggregated(int player, int aggregatedIndex) {
+		return getBehaviourFromGlobalData(player, history.getSumOfNRounds(aggregatedIndex));
+	}
+	
+	public Behaviour getBehaviour(int player, int fromRound, int toRound) {		
+		return getBehaviourFromGlobalData(player, history.getAggregatedData(fromRound, toRound));
+	}
+	
+	private Behaviour getBehaviourFromGlobalData(int player, GlobalRoundData globData) {
+		if (player >= CONSTANT.PLAYER_COUNT || player<0)
+			return Behaviour.NOT_ASCERTAINABLE;
+		
+		int callRaiseRatio[] = {globData.getTotalNumCalls(player),globData.getTotalNumRaises(player)};
+		int foldRatio[] = new int[GameState.values().length];
+		GameState gameStates[] = GameState.values();
+		for (int i=0; i<gameStates.length; i++)
+			foldRatio[i] = globData.getNumFolds(gameStates[i], player);
+		
+		Behaviour behaviours[] = Behaviour.values();
+		double tmpError;
+		double minError = compareRatio(behaviours[0].raiseRatio(), normalizeArray(callRaiseRatio))+
+						  compareRatio(behaviours[0].foldRatio(), normalizeArray(foldRatio));
+		int minIndexOfError = 0;
+		
+		for (int i=1; i<behaviours.length; i++) {
+			tmpError = compareRatio(behaviours[i].raiseRatio(), normalizeArray(callRaiseRatio))+
+					   compareRatio(behaviours[i].foldRatio(), normalizeArray(foldRatio));
+			if (tmpError<minError) {
+				minError = tmpError;
+				minIndexOfError = i;
+			}
+		}
+		if (CONSTANT.DEBUG) {
+			System.out.print("Call/Raise Ratio: ");
+			for (double value : normalizeArray(callRaiseRatio))
+				System.out.print(" " + value);
+			System.out.print(" ");
+			System.out.print("Fold Ratio: ");
+			for (double value : normalizeArray(foldRatio))
+				System.out.print(" " + value);
+			System.out.print(" ");
+		}
+		
+		return behaviours[minIndexOfError];
+	}
+	
+	/** Search for the smallest number in the array and divide every number in the array by this */
+	private double[] normalizeArray(int array[]) {
+		double result[] = new double[array.length];
+		double min = array[0]>0 ? array[0] : Double.POSITIVE_INFINITY;
+		for (int i=1; i<array.length; i++)
+			min = array[i] < min && array[i] > 0 ? array[i] : min;
+		if (min==Double.POSITIVE_INFINITY)
+			min=1;
+		for (int i=0; i<array.length; i++)
+			result[i] = (double)array[i]/min;	
+		return result;
+	}
+	
+	/** Give back the totalized differenzes between the arrays */
+	private double compareRatio(double first[], double second[]) {
+		double result = 0;
+		for (int i=0; i<Math.min(first.length, second.length); i++)
+			result += Math.abs(first[i]-second[i]);
+		return result;
+	}
+}

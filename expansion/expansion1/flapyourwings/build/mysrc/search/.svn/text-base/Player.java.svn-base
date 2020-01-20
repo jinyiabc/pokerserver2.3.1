@@ -1,0 +1,53 @@
+package mysrc.search;
+
+import java.util.ArrayList;
+
+import ca.ualberta.cs.poker.free.dynamics.Card;
+
+public abstract class Player {
+	protected ArrayList<Card> holeCards;
+	private int invested;
+	private int investedThisRound;
+	private boolean firstToAct = false;
+	
+	public void setInvestedThisRound(int investedThisRound) {
+		this.investedThisRound = investedThisRound;
+	}
+
+	public int getInvestedThisRound() {
+		return investedThisRound;
+	}
+	
+	public abstract DecisionTriple getDecisionTriple (GameState gameState);
+	
+	public String toString () {
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.append("holeCards: " + holeCards.toString() + ", ");
+		stringBuilder.append("invested: " + invested + ", ");
+		stringBuilder.append("investedThisRound: " + investedThisRound + ", ");
+		stringBuilder.append("firstToAct: " + firstToAct);
+		return stringBuilder.toString();
+	}
+
+	public void setFirstToAct(boolean firstToAct) {
+		this.firstToAct = firstToAct;
+	}
+
+	public boolean isFirstToAct() {
+		return firstToAct;
+	}
+
+	public int getInvested() {
+		return invested;
+	}
+
+	public void setInvested(int invested) {
+		this.invested = invested;
+	}
+
+	public ArrayList<Card> getHoleCards() {
+		return holeCards;
+	}
+	
+	
+}

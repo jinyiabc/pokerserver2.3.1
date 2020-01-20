@@ -1,0 +1,83 @@
+package mysrc.test;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+
+import mysrc.search.DecisionNode;
+import mysrc.search.GameState;
+import mysrc.search.Hero;
+import mysrc.search.Opponent;
+import mysrc.search.Player;
+import ca.ualberta.cs.poker.free.dynamics.Card;
+
+/**
+ * Klasse zum Testen. Alles hier kann bedenkenlos verändert oder gelöscht werden.
+ * 
+ * @author Markus Zopf
+ *
+ */
+public class Test {
+
+	public static void main(String[] args) {
+		
+		DecisionNode node = new DecisionNode (true);
+		
+		for (int i = 0; i < 1000; i++) {
+			Card card1 = new Card (Card.Rank.THREE, Card.Suit.HEARTS);
+			Card card2 = new Card (Card.Rank.SEVEN, Card.Suit.CLUBS);
+			
+			Card card3 = new Card (Card.Rank.KING, Card.Suit.DIAMONDS);
+			Card card4 = new Card (Card.Rank.NINE, Card.Suit.HEARTS);
+			Card card5 = new Card (Card.Rank.FIVE, Card.Suit.CLUBS);
+			
+			ArrayList<Card> holeCardsArray = new ArrayList<Card>();
+			holeCardsArray.add(card1);
+			holeCardsArray.add(card2);
+			
+			ArrayList<Card> boardArray = new ArrayList<Card>();
+			boardArray.add(card3);
+			boardArray.add(card4);
+			boardArray.add(card5);
+	
+			Hero hero = new Hero(holeCardsArray);
+			hero.setInvested(1);
+			hero.setFirstToAct(true);
+			Opponent opponent1 = new Opponent();
+			Opponent opponent2 = new Opponent();
+			
+			LinkedList<Player> players = new LinkedList<Player>();
+			players.add(hero);
+			players.add(opponent1);
+			players.add(opponent2);
+			
+			GameState gameState = new GameState();
+			gameState.setBoardCards(boardArray);
+			gameState.setMaxBetsizeThisRound(1);
+			gameState.setPlayers(players);
+			gameState.setPlayersToAct(players.size());
+			gameState.setPotsize(1);
+			gameState.initUnusedCards();
+			
+			opponent1.guessHoleCards(gameState);
+			opponent2.guessHoleCards(gameState);
+			
+			node.eval(gameState, false);
+		}
+		
+		System.out.println("nodeCount: " + node.getCurrentNodeCount());
+		if (node.getFoldChild() != null)
+			System.out.println("fold: " + node.getFoldChild().getExpectedValue());
+		if (node.getCheckCallChild() != null)
+			System.out.println("check/call: " + node.getCheckCallChild().getExpectedValue());
+		if (node.getBetRaiseChild() != null)
+			System.out.println("bet/raise: " + node.getBetRaiseChild().getExpectedValue());
+		System.out.println("\n\n\n\n\n");
+		
+		
+//		String string = new String();
+//		string += "digraph TEST { \nnodesep=0.7 \n";
+//		string += node.toGraphvizString(5);
+//		string += "}";
+//		System.out.println(string);
+	}
+}

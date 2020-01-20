@@ -1,0 +1,126 @@
+package ke.opponent;
+
+/**
+ * The Behaviours
+ *
+ * @author Alex
+ */
+
+public enum Behaviour {
+	
+	TIGHT_AGRESSIVE {
+		public double[] raiseRatio() {
+			double result[] = {1,3};
+			return result;
+		}
+		
+		public double[] foldRatio() {
+			double result[] = {3,2,1,1,1,1};
+			return result;
+		}
+		
+		public Behaviour merge(Behaviour beh) {
+			switch (beh) {
+				case TIGHT_AGRESSIVE : return TIGHT_AGRESSIVE;
+				case TIGHT_PROGRESSIVE : return TIGHT_AGRESSIVE;
+				case LOOSE_AGRESSIVE : return LOOSE_AGRESSIVE;
+				case LOOSE_PROGRESSIVE : return TIGHT_PROGRESSIVE;
+				case NOT_ASCERTAINABLE : return TIGHT_AGRESSIVE;
+				default : return NOT_ASCERTAINABLE;
+			}
+		}
+	},
+	
+	TIGHT_PROGRESSIVE {
+		public double[] raiseRatio() {
+			double result[] = {1,2};
+			return result;
+		}
+		
+		public double[] foldRatio() {
+			double result[] = {3,2,1,1,1,1};
+			return result;
+		}
+		
+		public Behaviour merge(Behaviour beh) {
+			switch (beh) {
+				case TIGHT_AGRESSIVE : return TIGHT_AGRESSIVE;
+				case TIGHT_PROGRESSIVE : return TIGHT_PROGRESSIVE;
+				case LOOSE_AGRESSIVE : return LOOSE_AGRESSIVE;
+				case LOOSE_PROGRESSIVE : return LOOSE_PROGRESSIVE;
+				case NOT_ASCERTAINABLE : return TIGHT_PROGRESSIVE;
+				default : return NOT_ASCERTAINABLE;
+			}
+		}
+	},
+	
+	LOOSE_AGRESSIVE {
+		public double[] raiseRatio() {
+			double result[] = {1,1};
+			return result;
+		}
+		
+		public double[] foldRatio() {
+			double result[] = {2,1,1,1,1,1};
+			return result;
+		}
+		
+		public Behaviour merge(Behaviour beh) {
+			switch (beh) {
+				case TIGHT_AGRESSIVE : return TIGHT_AGRESSIVE;
+				case TIGHT_PROGRESSIVE : return LOOSE_AGRESSIVE;
+				case LOOSE_AGRESSIVE : return LOOSE_AGRESSIVE;
+				case LOOSE_PROGRESSIVE : return LOOSE_AGRESSIVE;
+				case NOT_ASCERTAINABLE : return LOOSE_AGRESSIVE;
+				default : return NOT_ASCERTAINABLE;
+			}
+		}
+	},
+	
+	LOOSE_PROGRESSIVE {
+		public double[] raiseRatio() {
+			double result[] = {3,1};
+			return result;
+		}
+		
+		public double[] foldRatio() {
+			double result[] = {1,1,1,1,1,1};
+			return result;
+		}
+		
+		public Behaviour merge(Behaviour beh) {
+			switch (beh) {
+				case TIGHT_AGRESSIVE : return LOOSE_AGRESSIVE;
+				case TIGHT_PROGRESSIVE : return TIGHT_PROGRESSIVE;
+				case LOOSE_AGRESSIVE : return LOOSE_AGRESSIVE;
+				case LOOSE_PROGRESSIVE : return LOOSE_PROGRESSIVE;
+				case NOT_ASCERTAINABLE : return LOOSE_PROGRESSIVE;
+				default : return NOT_ASCERTAINABLE;
+			}
+		}
+	},
+	
+	NOT_ASCERTAINABLE {
+		public double[] raiseRatio() {
+			double result[] = {10,10};
+			return result;
+		}
+		
+		public double[] foldRatio() {
+			double result[] = {10,10,10,10,10,10};
+			return result;
+		}
+		
+		public Behaviour merge(Behaviour beh) {
+			return beh;
+		}
+	};
+	
+	/** Ratio of call and raise*/
+	public abstract double[] raiseRatio();
+	
+	/** Ratio of folds in preflop, flop, turn, river, showdown(finished games) */
+	public abstract double[] foldRatio();
+	
+	public abstract Behaviour merge(Behaviour beh);
+}

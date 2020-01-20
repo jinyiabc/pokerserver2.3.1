@@ -1,0 +1,78 @@
+10
+
+dir
+0
+https://www.ke.tu-darmstadt.de/svn/bot_2/bots/allineq_player/build/ke
+https://www.ke.tu-darmstadt.de/svn/bot_2
+add
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+06821c2b-6e64-4298-aa9a-86961ad016c3
+
+
+
+
+
+
+
+empty
+
+history
+dir
+
+
+
+add
+
+opponent
+dir
+
+
+
+add
+
+engine
+dir
+
+
+
+add
+
+timermgmt
+dir
+
+
+
+add
+
+data
+dir
+
+
+
+add
+
+client
+dir
+
+
+
+add
+

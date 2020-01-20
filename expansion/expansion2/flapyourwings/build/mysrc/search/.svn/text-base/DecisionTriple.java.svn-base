@@ -1,0 +1,30 @@
+package mysrc.search;
+
+import java.util.Random;
+
+public class DecisionTriple {
+
+	private double foldProbability;
+	private double checkCallProbability;
+	private double betRaiseProbability;
+	
+	private static Random random = new Random();
+	
+	public DecisionTriple (double foldProbability, double checkCallProbability, double betRaiseProbability) {
+		this.foldProbability = foldProbability;
+		this.checkCallProbability = checkCallProbability;
+		this.betRaiseProbability = betRaiseProbability;
+	}
+	
+	public Decision getDecision () {
+		double randomDouble = random.nextDouble();
+		
+		if (randomDouble < foldProbability)
+			return Decision.FOLD;
+		
+		else if (randomDouble < foldProbability + checkCallProbability)
+			return Decision.CHECK_CALL;
+		
+		else return Decision.BET_RAISE;
+	}
+}

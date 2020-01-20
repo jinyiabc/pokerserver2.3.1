@@ -1,0 +1,132 @@
+package mysrc.search;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+
+import mysrc.Util;
+import mysrc.handevaluator.Board;
+import mysrc.handevaluator.Hand;
+import mysrc.handevaluator.HandRank;
+import ca.ualberta.cs.poker.free.dynamics.Card;
+
+public class LeafNode extends Node {
+
+	public LeafNode () {
+		this.nodeID = currentNodeCount++;
+		this.expectedValue = 0.0;
+	}
+	
+	public double eval (GameState gameState, boolean debug) {
+		if (debug) System.out.println("LeafNode: " + gameState.toString());
+		runs++;
+		
+		if (!gameState.isHeroStillInGame())
+			return expectedValue = ((expectedValue * (runs-1)) + gameState.getHeroInvested() * -1) / (double)runs;
+	
+		if (gameState.getPlayers().size() == 1)
+			return expectedValue = ((expectedValue * (runs-1)) + gameState.getPotsize() - gameState.getHeroInvested()) / (double)runs;
+
+		LinkedList<ArrayList<Card>> opponentsHoleCards = new LinkedList<ArrayList<Card>>();
+		
+		for (Player player : gameState.getPlayers()) {
+			if (!(player instanceof Hero)) {
+				ArrayList<Card> opponentHoleCards = player.getHoleCards();
+				opponentsHoleCards.add(opponentHoleCards);
+			}
+		}
+		
+		double reward = getReward(gameState.getHeroHoleCards(), gameState.getBoardCards(), opponentsHoleCards, gameState.getPotsize(), gameState.getHeroInvested(), debug);
+//		System.out.println("reward: " + reward);
+		return expectedValue = ((expectedValue * (runs-1)) + reward) / (double)runs;
+	}
+	
+	private double getReward (ArrayList<Card> holeCards, ArrayList<Card> boardCards, LinkedList<ArrayList<Card>> opponentsHoleCards, int potsize, int invested, boolean debug) {
+		HandRank ownHandRank = getHandRank(boardCards, holeCards);
+		if (debug) System.out.println("ownHandRank: " + ownHandRank.toString());
+		LinkedList <HandRank> opponentsHandRanks = new LinkedList<HandRank>();
+	
+		for (ArrayList<Card> opponentHoleCards : opponentsHoleCards) {
+			opponentsHandRanks.add(getHandRank(boardCards, opponentHoleCards));
+			if (debug) System.out.println("opponentsHandRank: " + opponentsHandRanks.getLast().toString());
+		}
+		
+    	if (ownHandRank.compareTo(getMaxHandRank(opponentsHandRanks)) < 0) {
+    		return invested * -1;
+    	}
+    	
+    	else if (ownHandRank.compareTo(getMaxHandRank(opponentsHandRanks)) > 0) {
+    		return potsize - invested;
+    	}
+    	
+    	else {
+    		return (potsize / (double)(getEqualHandRankCount(opponentsHandRanks, ownHandRank) + 1)) - invested;
+    	}
+	}
+	
+
+    private int getEqualHandRankCount (LinkedList<HandRank> handRanks, HandRank comparisonHandRank) {
+    	int equalHandRankCount = 0;
+    	
+    	for (HandRank handRank : handRanks)
+    		if (handRank.compareTo(comparisonHandRank) == 0)
+    			equalHandRankCount++;
+    	
+    	return equalHandRankCount;
+    }
+	
+    /**
+     * Bestimmt den höchten Handrank in einer Liste von HandRanks
+     * 
+     * @param handRanks Liste von HandRanks
+     * @return
+     */
+    private HandRank getMaxHandRank (LinkedList<HandRank> handRanks) {
+    	HandRank maxHandRank = handRanks.getFirst();
+    	
+    	for (HandRank handRank : handRanks)
+    		if (maxHandRank.compareTo(handRank) < 0)
+    			maxHandRank = handRank;
+    	
+    	return maxHandRank;
+    }
+    
+    /**
+     * Bestimmt den HandRank einer Hand in Kombination mit dem Board.
+     * 
+     * @param holeCardsArray
+     * @param boardArray
+     * @return
+     */
+    private HandRank getHandRank (ArrayList<Card> boardArray, ArrayList<Card> holeCardsArray) {
+        Hand holeCards = new Hand();
+        Board board = new Board();
+
+    	for (Card card : holeCardsArray)
+    		if (card != null)
+    			holeCards.addCard(convertCard(card));
+    	
+    	for (Card card : boardArray)
+    		if (card != null)
+    			board.addCard(convertCard(card));
+    	
+    	return holeCards.getHandRank(board);
+    }
+    
+    /**
+     * Konvertiert eine Karte aus ca/ualberta/cs/poker/free/dynamics in eine mysrc/handevaluator Karte.
+     * 
+     * @param card zu konvertierende Karte
+     * @return eine Karte aus dem handevaluator namespace
+     */
+    private mysrc.handevaluator.Card convertCard (Card card) {
+    	mysrc.handevaluator.Card.Rank rank = mysrc.handevaluator.Card.Rank.values()[card.rank.ordinal()];
+    	mysrc.handevaluator.Card.Suit suit = mysrc.handevaluator.Card.Suit.values()[card.suit.ordinal()];
+    	
+    	return new mysrc.handevaluator.Card (rank, suit);
+    }
+    
+	
+	public String toGraphvizString (int depth) {
+		return this.nodeID + " [style = filled, fillcolor = black]\n";
+	}
+}

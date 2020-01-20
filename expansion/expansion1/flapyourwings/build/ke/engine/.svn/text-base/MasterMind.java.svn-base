@@ -1,0 +1,56 @@
+package ke.engine;
+
+import java.security.SecureRandom;
+
+import ke.client.ClientRingDynamics;
+import ke.data.Action;
+
+
+public class MasterMind {
+	 
+	SecureRandom random = new SecureRandom();
+	Action currently_best_action = Action.CALL; 
+
+	/**
+	 * Analyses the sithuation. And stores a random decission in 
+	 * currently_best_action. 
+	 * @param state_of_the_world
+	 */
+	public void think_about(ClientRingDynamics state_of_the_world){
+
+		System.out.println("I have to carefully consider any contingency");
+		try {
+			wait(3);	
+		} catch (Exception e) {
+			System.out.println("Under these circumstance I cannot deploy my mind.");
+		}
+		
+		System.out.println("The situation is very complex.");
+        
+		double random_number = random.nextDouble();
+		
+	    if (random_number<0.05){
+	    	currently_best_action = Action.FOLD;
+	    } else if (random_number<0.55){
+	    	currently_best_action = Action.CALL;
+	    } else {
+	    	currently_best_action = Action.RAISE;
+	    }	
+			
+        System.out.println("But I have found the ultimate answer.");
+        
+        chill();
+            
+	}
+	
+	public Action getAction(){
+		return currently_best_action;
+	}
+	
+	public void chill(){
+		
+	}
+	
+}
+
+

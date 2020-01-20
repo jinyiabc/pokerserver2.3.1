@@ -1,0 +1,170 @@
+package mysrc.search;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
+import mysrc.Util;
+import mysrc.handevaluator.Board;
+import mysrc.handevaluator.Hand;
+import mysrc.handevaluator.HandRank;
+import ca.ualberta.cs.poker.free.dynamics.Card;
+
+public class AllInEquityCalculator {
+
+	 /**
+     * Berechnet die All In Equity einer Hand durch eine Monte Carlo Simulation.
+     * 
+     * @param holeCardsArray holeCards von Hero
+     * @param boardArray schon bekannte board cards
+     * @param villianCount Anzahl Gegner
+     * @return
+     */
+    public static double getAllInEquity (Card[] holeCardsArray, Card[] boardArray, int villianCount) {
+    	ArrayList<Card> holeCardsList = new ArrayList<Card>();
+    	ArrayList<Card> boardList = new ArrayList<Card>();
+    	
+    	for (Card card : holeCardsArray)
+    		holeCardsList.add(card);
+    	
+    	for (Card card : boardArray)
+    		boardList.add(card);
+    	
+    	return AllInEquityCalculator.getAllInEquity(holeCardsList, boardList, villianCount);
+    }
+	
+	  /**
+     * Berechnet die All In Equity einer Hand durch eine Monte Carlo Simulation.
+     * 
+     * @param holeCardsList holeCards von Hero
+     * @param boardList schon bekannte board cards
+     * @param villianCount Anzahl Gegner
+     * @return
+     */
+    public static double getAllInEquity (ArrayList<Card> holeCardsList, ArrayList<Card> boardList, int villianCount) {
+    	LinkedList<Card> possibleBoardCards;
+    	LinkedList<LinkedList<Card>> possibleVillainHoleCards;
+    	LinkedList<HandRank> possibleVillainHandRanks;
+    	
+    	int win = 0;
+    	int tie = 0;
+    	int loss = 0;
+    	int handsplayed = 0;
+    	
+    	for (int i = 0; i < 100; i++) {
+        	possibleBoardCards = new LinkedList<Card>();
+        	possibleVillainHoleCards = new LinkedList<LinkedList<Card>>();
+        	possibleVillainHandRanks = new LinkedList<HandRank>();
+    		
+        	ArrayList<Card> allCards = Util.initUnusedCardsCards();
+	    	allCards.remove(holeCardsList.get(0));
+	    	allCards.remove(holeCardsList.get(1));
+    	
+	    	for (Card card : boardList)
+	    		allCards.remove(card);
+    	
+	    	for (Card card : boardList)
+	    		possibleBoardCards.add(card);
+	    	
+	    	while (allCards.size() > 45) {
+	    		possibleBoardCards.add(Util.getAndRemoveRandomCardFromList(allCards));
+	    	}
+	    	
+	    	for (int j = 0; j < villianCount; j++) {
+	    		LinkedList<Card> holeCards = new LinkedList<Card>();
+	    		holeCards.add(Util.getAndRemoveRandomCardFromList(allCards));
+	    		holeCards.add(Util.getAndRemoveRandomCardFromList(allCards));
+	    		possibleVillainHoleCards.add(holeCards);
+	    	}
+	
+	    	for (LinkedList<Card> holeCards : possibleVillainHoleCards)
+	    		possibleVillainHandRanks.add(getHandRank(holeCards, possibleBoardCards));
+	    	
+	    	HandRank ownRank = getHandRank(holeCardsList, possibleBoardCards);
+	
+	    	if (ownRank.compareTo(getMaxHandRank(possibleVillainHandRanks)) < 0) {
+	    		loss++;
+	    	}
+	    	else if (ownRank.compareTo(getMaxHandRank(possibleVillainHandRanks)) > 0) {
+	    		win++;
+	    	}
+	    	else
+	    		tie++;
+	    	
+	    	handsplayed++;
+    	}
+    	
+    	return (win + tie/(float)(villianCount+1))/((float)handsplayed);
+    }
+    
+    /**
+     * Bestimmt den höchten Handrank in einer Liste von HandRanks
+     * 
+     * @param handRanks Liste von HandRanks
+     * @return
+     */
+    private static HandRank getMaxHandRank (LinkedList<HandRank> handRanks) {
+    	HandRank maxHandRank = handRanks.getFirst();
+    	
+    	for (HandRank handRank : handRanks)
+    		if (maxHandRank.compareTo(handRank) < 0)
+    			maxHandRank = handRank;
+    	
+    	return maxHandRank;
+    }
+    
+    /**
+     * Bestimmt den HandRank einer Hand in Kombination mit dem Board.
+     * 
+     * @param holeCardsArray
+     * @param boardList
+     * @return
+     */
+    public static HandRank getHandRank (List<Card> holeCards, List<Card> boardList) {
+    	Card[] boardArray = new Card[boardList.size()];
+    	for (int i = 0; i < boardList.size(); i++)
+    		boardArray[i] = boardList.get(i);
+    	Card[] holeCardsArray = new Card[holeCards.size()];
+    	for (int i = 0; i < holeCards.size(); i++)
+    		holeCardsArray[i] = holeCards.get(i);
+
+    	return getHandRank(holeCardsArray, boardArray);
+    }
+    
+    /**
+     * Bestimmt den HandRank einer Hand in Kombination mit dem Board.
+     * 
+     * @param holeCardsArray
+     * @param boardArray
+     * @return
+     */
+    public static HandRank getHandRank (Card[] holeCardsArray, Card[] boardArray) {
+        Hand holeCards = new Hand();
+        Board board = new Board();
+
+    	
+    	for (Card card : holeCardsArray)
+    		if (card != null)
+    			holeCards.addCard(convertCard(card));
+    	
+    	for (Card card : boardArray)
+    		if (card != null)
+    			board.addCard(convertCard(card));
+    	
+    	return holeCards.getHandRank(board);
+    }
+    
+    
+    /**
+     * Konvertiert eine Karte aus ca/ualberta/cs/poker/free/dynamics in eine mysrc/handevaluator Karte.
+     * 
+     * @param card zu konvertierende Karte
+     * @return eine Karte aus dem handevaluator namespace
+     */
+    private static mysrc.handevaluator.Card convertCard (Card card) {
+    	mysrc.handevaluator.Card.Rank rank = mysrc.handevaluator.Card.Rank.values()[card.rank.ordinal()];
+    	mysrc.handevaluator.Card.Suit suit = mysrc.handevaluator.Card.Suit.values()[card.suit.ordinal()];
+    	
+    	return new mysrc.handevaluator.Card (rank, suit);
+    }
+}

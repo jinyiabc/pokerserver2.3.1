@@ -1,0 +1,372 @@
+package mysrc.hha;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+
+import ke.data.Action;
+import mysrc.handevaluator.Board;
+import mysrc.handevaluator.Hand;
+import mysrc.handevaluator.HandRank;
+import ca.ualberta.cs.poker.free.dynamics.Card;
+import ca.ualberta.cs.poker.free.dynamics.Card.Rank;
+import ca.ualberta.cs.poker.free.dynamics.Card.Suit;
+
+/**
+ * @author Markus Zopf
+ *
+ */
+public class HandHistoryAnalyser {
+
+	private static final int PLAYERS = 0;
+	private static final int HANDNUMBER = 1;
+	private static final int BETTING = 2;
+	private static final int CARDS = 3;
+	private static final int NETOHAND = 4;
+	
+	private static final int HOLECARDS = 0;
+	private static final int FLOP = 1;
+	private static final int TURN = 2;
+	private static final int RIVER = 3;
+	
+	private static final int PLAYER_COUNT = 3;
+
+	private static HashMap<String, HashMap<HandRank.Rank, StatisticEntry>> hashMap = new HashMap<String, HashMap<HandRank.Rank,StatisticEntry>>();
+
+	/**
+	 * Analysiert die Datei "handhistory.log" und erstellt eine Statistik
+	 * 
+	 * @param debug kann die Debugausgaben aktivieren
+	 */
+	public static void analyseHandHistory (boolean debug) {
+		try {
+			BufferedReader bufferedReader = new BufferedReader(new FileReader("handhistory.log"));
+			while (bufferedReader.ready()) {
+				String line = bufferedReader.readLine();
+				if (line.length() == 0)
+					continue;
+				
+				if (debug) {
+					System.out.println();
+					System.out.println(line);
+				}
+				
+				String[] hand = null;
+				String[] players = null;
+				
+				HandRank handRank = null;
+				
+				if (line.charAt(0) != '#') {
+					hand = line.split(":");
+					players = hand[PLAYERS].split("\\|");
+					
+					for (int player = 0; player < PLAYER_COUNT; player++) {
+						if (hand[CARDS].contains("/")) {
+			
+							String[] holeCards = hand[CARDS].split("/")[HOLECARDS].split("\\|");
+							String boardCards = hand[CARDS].split("/")[FLOP];
+							String betting = hand[BETTING].split("/")[FLOP];
+							
+							handRank = getHandRank(convertCardString(boardCards), convertCardString(holeCards[player]));
+							updateHashmap(players[player], handRank, betting, player, isAhead(player, holeCards, boardCards), isBehind(player, holeCards, boardCards), debug);
+							
+							if (hand[CARDS].split("/").length >= 3) {
+								boardCards += hand[CARDS].split("/")[TURN];
+								betting = hand[BETTING].split("/")[TURN];
+								
+								handRank = getHandRank(convertCardString(boardCards), convertCardString(holeCards[player]));
+								updateHashmap(players[player], handRank, betting, player, isAhead(player, holeCards, boardCards), isBehind(player, holeCards, boardCards), debug);
+							}
+							
+							if (hand[CARDS].split("/").length >= 4) {
+								boardCards += hand[CARDS].split("/")[RIVER];
+								betting = hand[BETTING].split("/")[RIVER];
+								
+								handRank = getHandRank(convertCardString(boardCards), convertCardString(holeCards[player]));
+								updateHashmap(players[player], handRank, betting, player, isAhead(player, holeCards, boardCards), isBehind(player, holeCards, boardCards), debug);
+							}
+						}
+					}
+				}
+			}
+			
+			printResults ();
+		}
+		
+		catch (IOException exception) {
+			exception.printStackTrace();
+		}
+	}
+	/**
+	 * Prüft, ob der Spieler an der Position currentPlayer zur Zeit die beste Hand hat.
+	 * 
+	 * @param currentPlayer Position des aktuellen Spielers
+	 * @param holeCards Array mit den holeCards der Spieler
+	 * @param boardCards aktuelles board
+	 * @return true, falls der Spieler an Postition currentPlayer die beste Hand hat; sonst false
+	 */
+	private static boolean isAhead (int currentPlayer, String[] holeCards, String boardCards) {
+		HandRank currentPlayerHandRank = getHandRank(convertCardString(boardCards), convertCardString(holeCards[currentPlayer]));
+		if (currentPlayerHandRank.compareTo(getMaxHandRank(getOtherPlayerHandRanks(currentPlayer, holeCards, boardCards))) >= 0)
+			return true;
+		
+		else return false;
+	}
+	
+	/**
+	 * Prüft, ob der Spieler an der Position currentPlayer zur Zeit nicht die beste Hand hat.
+	 * 
+	 * @param currentPlayer Position des aktuellen Spielers
+	 * @param holeCards Array mit den holeCards der Spieler
+	 * @param boardCards aktuelles board
+	 * @return true, falls der Spieler an Postition currentPlayer nicht die beste Hand hat; sonst false
+	 */
+	private static boolean isBehind (int currentPlayer, String[] holeCards, String boardCards) {
+		HandRank currentPlayerHandRank = getHandRank(convertCardString(boardCards), convertCardString(holeCards[currentPlayer]));
+		if (currentPlayerHandRank.compareTo(getMaxHandRank(getOtherPlayerHandRanks(currentPlayer, holeCards, boardCards))) < 0)
+			return true;
+		
+		else return false;
+	}
+	
+	/**
+	 * Bestimmt alle HandRanks der Gegner
+	 * 
+	 * @param currentPlayer Position des aktuellen Spielers
+	 * @param holeCards Array mit den holeCards der Spieler
+	 * @param boardCards aktuelles board
+	 * @return Liste mit allen HandRanks der Gegner
+	 */
+	private static LinkedList<HandRank> getOtherPlayerHandRanks (int currentPlayer, String[] holeCards, String boardCards) {
+		LinkedList<HandRank> otherPlayerHandRanks = new LinkedList<HandRank>();
+		for (int player = 0; player < PLAYER_COUNT; player++)
+			if (player != currentPlayer)
+				otherPlayerHandRanks.add(getHandRank(convertCardString(holeCards[player]), convertCardString(boardCards)));
+		return otherPlayerHandRanks;
+	}
+	
+	/**
+	 * Updatet hashMap mit neuen Werte.
+	 * 
+	 * @param playerString Spielername zu dem ein update erfolgt
+	 * @param handRank der HandRank den der Spieler hat 
+	 * @param bettingString String, welcher die bettingactions beschreibt 
+	 * @param player Position des Spielers in dem bettingString
+	 * @param ahead beschreibt, ob der Spieler mit seinem HandRank aktuell vorne liegt
+	 * @param behind beschreibt, ob der Spieler mit seinem HandRank aktuell hinten liegt
+	 */
+	private static void updateHashmap (String playerString, HandRank handRank, String bettingString, int player, boolean ahead, boolean behind, boolean debug) {
+		if (debug) {
+			System.out.println();
+			printResults();
+		}
+		if (!hashMap.containsKey(playerString)) {
+			hashMap.put(playerString, new HashMap<HandRank.Rank, StatisticEntry>());
+		}
+		
+		if (!hashMap.get(playerString).containsKey(handRank.getRank())) {
+			hashMap.get(playerString).put(handRank.getRank(), new StatisticEntry());
+		}
+		
+		for (int betting = player; betting < bettingString.length(); betting+=PLAYER_COUNT) {
+			
+			Action action = Action.parseAction(bettingString.charAt(betting));
+			
+			if (debug)
+				System.out.println("adding " + action.toString() + " with " + handRank.getRank() + " to " + playerString + ". betting was " + betting + " in " + bettingString);
+		
+			switch (action) {
+				case FOLD:
+					hashMap.get(playerString).get(handRank.getRank()).addFold(ahead, behind);
+					break;
+				case CALL:
+					hashMap.get(playerString).get(handRank.getRank()).addCheckCall(ahead, behind);
+					break;
+				case RAISE:
+					hashMap.get(playerString).get(handRank.getRank()).addBetRaise(ahead, behind);
+					break;
+			}
+		}
+	}
+	
+	/**
+	 * Konvertiert einen Kartenstring in eine ArrayList aus Karten.
+	 * 
+	 * @param cardstring String, der zu konvertieren ist
+	 * @return konvertierter cardstring als ArrayList
+	 */
+	private static ArrayList<Card> convertCardString (String cardstring) {
+		ArrayList<Card> cards = new ArrayList<Card>();
+
+		for (int i = 0; i < cardstring.length(); i = i + 2)
+			cards.add(new Card(convertRank(cardstring.charAt(i)), convertSuit(cardstring.charAt(i+1))));
+		
+		return cards;
+	}
+	
+	/**
+	 * Konvertiert ein char zu einem Rank.
+	 * 
+	 * @param rank char, welcher zu konvertieren ist
+	 * @return rank konvertiert in einen Rank
+	 */
+	private static Rank convertRank (char rank) {
+		if (rank == 'A')
+			return Rank.ACE;
+		
+		else if (rank == 'K')
+			return Rank.KING;
+			
+		else if (rank == 'Q')
+			return Rank.QUEEN;
+				
+		else if (rank == 'J')
+			return Rank.JACK;
+			
+		else if (rank == 'T')
+			return Rank.TEN;
+			
+		else if (rank == '9')
+			return Rank.NINE;
+			
+		else if (rank == '8')
+			return Rank.EIGHT;
+			
+		else if (rank == '7')
+			return Rank.SEVEN;
+			
+		else if (rank == '6')
+			return Rank.SIX;
+			
+		else if (rank == '5')
+			return Rank.FIVE;
+			
+		else if (rank == '4')
+			return Rank.FOUR;
+			
+		else if (rank == '3')
+			return Rank.THREE;
+			
+		else if (rank == '2')
+			return Rank.TWO;
+		
+		else
+			return null;
+	}
+	
+	/**
+	 * Konvertiert ein char zu einer Suit.
+	 * 
+	 * @param suit char, welcher zu konvertieren ist
+	 * @return suit konvertiert in eine Suit
+	 */
+	private static Suit convertSuit (char suit) {
+		if (suit == 'c')
+			return Suit.CLUBS;
+		
+		else if (suit == 'd')
+			return Suit.DIAMONDS;
+		
+		else if (suit == 'h')
+			return Suit.HEARTS;
+			
+		else if (suit == 's')
+			return Suit.SPADES;
+			
+		else
+			return null;
+	}
+
+	/**
+	 * Gibt die Ergebnisse der Analyse, die in hashMap gespeichert wurden, aus.
+	 */
+	private static void printResults() {
+		for (String player : hashMap.keySet()) {
+			System.out.println(player+": ");
+			for (HandRank.Rank rank : HandRank.Rank.values()) {
+				if (hashMap.get(player).get(rank) != null) {
+					System.out.print(rank + " ABS: ");
+					System.out.println(hashMap.get(player).get(rank).toCountString());
+					System.out.print(rank + " PROP: ");
+					System.out.println(hashMap.get(player).get(rank).toProbabilityString());
+					System.out.println();
+				}
+			}
+			System.out.println();
+		}
+	}
+	
+    /**
+     * Bestimmt den HandRank einer Hand in Kombination mit dem Board.
+     * 
+     * @param holeCardsArray
+     * @param boardList
+     * @return
+     */
+    public static HandRank getHandRank (List<Card> holeCards, List<Card> boardList) {
+    	Card[] boardArray = new Card[boardList.size()];
+    	for (int i = 0; i < boardList.size(); i++)
+    		boardArray[i] = boardList.get(i);
+    	Card[] holeCardsArray = new Card[holeCards.size()];
+    	for (int i = 0; i < holeCards.size(); i++)
+    		holeCardsArray[i] = holeCards.get(i);
+
+    	return getHandRank(holeCardsArray, boardArray);
+    }
+    
+    /**
+     * Bestimmt den HandRank einer Hand in Kombination mit dem Board.
+     * 
+     * @param holeCardsArray
+     * @param boardArray
+     * @return
+     */
+    public static HandRank getHandRank (Card[] holeCardsArray, Card[] boardArray) {
+        Hand holeCards = new Hand();
+        Board board = new Board();
+
+    	
+    	for (Card card : holeCardsArray)
+    		if (card != null)
+    			holeCards.addCard(convertCard(card));
+    	
+    	for (Card card : boardArray)
+    		if (card != null)
+    			board.addCard(convertCard(card));
+    	
+    	return holeCards.getHandRank(board);
+    }
+    
+    /**
+     * Konvertiert eine Karte aus ca/ualberta/cs/poker/free/dynamics in eine mysrc/handevaluator Karte.
+     * 
+     * @param card zu konvertierende Karte
+     * @return eine Karte aus dem handevaluator namespace
+     */
+    private static mysrc.handevaluator.Card convertCard (Card card) {
+    	mysrc.handevaluator.Card.Rank rank = mysrc.handevaluator.Card.Rank.values()[card.rank.ordinal()];
+    	mysrc.handevaluator.Card.Suit suit = mysrc.handevaluator.Card.Suit.values()[card.suit.ordinal()];
+    	
+    	return new mysrc.handevaluator.Card (rank, suit);
+    }
+    
+    /**
+     * Bestimmt den höchten Handrank aus einer Liste von HandRanks
+     * 
+     * @param handRanks Liste von HandRanks
+     * @return
+     */
+    public static HandRank getMaxHandRank (LinkedList<HandRank> handRanks) {
+    	HandRank maxHandRank = handRanks.getFirst();
+    	
+    	for (HandRank handRank : handRanks)
+    		if (maxHandRank.compareTo(handRank) < 0)
+    			maxHandRank = handRank;
+    	
+    	return maxHandRank;
+    }
+}

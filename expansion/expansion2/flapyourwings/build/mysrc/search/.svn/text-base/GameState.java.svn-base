@@ -1,0 +1,203 @@
+package mysrc.search;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+
+import ca.ualberta.cs.poker.free.dynamics.Card;
+
+public class GameState {
+
+	private static Random random = new Random();
+	private ArrayList<Card> boardCards;
+	private ArrayList<Card> muckedCards = new ArrayList<Card>();
+	private LinkedList<Card> unusedCards = new LinkedList<Card>();
+	private LinkedList<Player> players;
+	private int playersToAct;
+	private int potsize;
+	private int maxBetsizeThisRound;
+	private int heroInvestedUntilFold;
+
+	public void resetInvestedThisRound () {
+		for (Player player : players)
+			player.setInvestedThisRound(0);
+	}
+	
+	public boolean isHeroStillInGame () {
+		for (Player player : players)
+			if (player instanceof Hero)
+				return true;
+		return false;
+	}
+	
+	public boolean isHeroNextToAct () {
+		if (players.getFirst() instanceof Hero)
+				return true;
+		else
+			return false;
+	}
+	
+	public void rotateToRoundstartState () {
+		while (!players.getFirst().isFirstToAct()) 
+			rotateOpponents ();
+	}
+	
+	public void rotateOpponents () {
+		Player player = players.poll();
+		players.add(player);
+	}
+	
+	public void decPlayersToAct () {
+		playersToAct--;
+	}
+	
+	public void resetPlayersToActToMax () {
+		playersToAct = players.size()-1;
+	}
+	
+	public void addToPotsize (int value) {
+		potsize += value;
+	}
+	
+	public void currentOpponentFolds () {
+		decPlayersToAct();
+		Player player = players.removeFirst();
+		
+		if (player.getHoleCards() != null)
+			muckedCards.addAll(player.getHoleCards());
+		
+		if (player instanceof Hero)
+			heroInvestedUntilFold = player.getInvested();
+		
+		if (player.isFirstToAct())
+			players.getFirst().setFirstToAct(true);
+	}
+	
+	public void currentOpponentCheckCalls () {
+		decPlayersToAct();
+		int additionalBets = maxBetsizeThisRound - players.getFirst().getInvestedThisRound();
+		potsize += additionalBets;
+		players.getFirst().setInvestedThisRound(maxBetsizeThisRound);
+		players.getFirst().setInvested(players.getFirst().getInvested() + additionalBets);
+	}
+	
+	public void currentOpponentBetRaises () {
+		resetPlayersToActToMax();
+		maxBetsizeThisRound++;
+		int additionalBets = maxBetsizeThisRound - players.getFirst().getInvestedThisRound();
+		potsize += additionalBets;
+		players.getFirst().setInvestedThisRound(maxBetsizeThisRound);
+		players.getFirst().setInvested(players.getFirst().getInvested() + additionalBets);
+	}
+	
+	public ArrayList<Card> getHeroHoleCards () {
+		for (Player player : players)
+			if (player instanceof Hero)
+				return player.getHoleCards();
+		return null;
+	}
+	
+	public int getHeroInvested () {
+		for (Player player : players)
+			if (player instanceof Hero)
+				return player.getInvested();
+		
+		return heroInvestedUntilFold;
+	}
+	
+	public ArrayList<Card> getBoardCards() {
+		return boardCards;
+	}
+	
+	public void setBoardCards(ArrayList<Card> boardCards) {
+		this.boardCards = boardCards;
+	}
+	
+	public void setBoardCards(Card[] boardCards) {
+		this.boardCards = new ArrayList<Card>();
+		for (Card card : boardCards)
+				this.boardCards.add(card);
+	}
+	
+	public int getPotsize() {
+		return potsize;
+	}
+	
+	public void setPotsize(int potsize) {
+		this.potsize = potsize;
+	}
+
+	public void setPlayersToAct(int playersToAct) {
+		this.playersToAct = playersToAct;
+	}
+
+	public int getPlayersToAct() {
+		return playersToAct;
+	}
+
+	public void setMaxBetsizeThisRound(int maxBetsizeThisRound) {
+		this.maxBetsizeThisRound = maxBetsizeThisRound;
+	}
+
+	public int getMaxBetsizeThisRound() {
+		return maxBetsizeThisRound;
+	}
+
+	public LinkedList<Player> getPlayers() {
+		return players;
+	}
+
+	public void setPlayers(LinkedList<Player> players) {
+		this.players = players;
+	}
+
+	public String toString () {
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.append("board: " + boardCards.toString() + ", ");
+		stringBuilder.append("player: " + players.toString() + ", ");
+		stringBuilder.append("playersToAct: " + playersToAct + ", ");
+		stringBuilder.append("potsize: " + potsize + ", ");
+		stringBuilder.append("maxBetsizeThisRound: " + maxBetsizeThisRound);
+		return stringBuilder.toString();
+		
+	}
+	
+	public void initUnusedCards() {
+		unusedCards = new LinkedList<Card>();
+		for (Card.Rank rank : Card.Rank.values())
+			for (Card.Suit suit : Card.Suit.values())
+				unusedCards.add(new Card (rank, suit));
+		
+		unusedCards.removeAll(muckedCards);
+		unusedCards.removeAll(boardCards);
+		for (Player player : players)
+			if (player.getHoleCards() != null)
+				unusedCards.removeAll(player.getHoleCards());
+	}
+	
+	public LinkedList<Card> getUnusedCards () {
+		return unusedCards;
+	}
+	
+	public void dealNextStreet () {
+		if (boardCards.size() == 0) {
+			boardCards.add(getRandomCardFromList(getUnusedCards()));
+			boardCards.add(getRandomCardFromList(getUnusedCards()));
+			boardCards.add(getRandomCardFromList(getUnusedCards()));
+		}
+		
+		else if (boardCards.size() < 5) {
+			boardCards.add(getRandomCardFromList(getUnusedCards()));
+		}
+		
+		else throw new RuntimeException("Boardkarten sind bereits komplett gedealt.");
+	}
+	
+    public static Card getRandomCardFromList (List<Card> cardList) {
+    	int randomCardIndex = random.nextInt(cardList.size());
+		Card card = cardList.get(randomCardIndex);
+		cardList.remove(randomCardIndex);
+		return card;
+    }
+}

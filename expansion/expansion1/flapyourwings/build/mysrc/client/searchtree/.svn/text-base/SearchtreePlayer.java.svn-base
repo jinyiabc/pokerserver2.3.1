@@ -1,0 +1,164 @@
+package mysrc.client.searchtree;
+
+import java.net.InetAddress;
+import java.util.LinkedList;
+
+import ke.client.ClientRingDynamics;
+import ke.client.ClientRingStateParser;
+import ke.data.CONSTANT;
+import mysrc.MyClientRingDynamics;
+import mysrc.Util;
+import mysrc.search.AllInEquityCalculator;
+import mysrc.search.DecisionNode;
+import mysrc.search.GameState;
+import mysrc.search.Hero;
+import mysrc.search.Opponent;
+import mysrc.search.Player;
+import ca.ualberta.cs.poker.free.client.PokerClient;
+import ca.ualberta.cs.poker.free.dynamics.LimitType;
+import ca.ualberta.cs.poker.free.dynamics.MatchType;
+
+public class SearchtreePlayer extends PokerClient {
+
+	public MyClientRingDynamics state;
+	
+    public static void main(String[] args) throws Exception{
+    	SearchtreePlayer pp = new SearchtreePlayer();
+        System.out.println("Attempting to connect to "+args[0]+" on port "+args[1]+"...");
+
+        pp.connect(InetAddress.getByName(args[0]), Integer.parseInt(args[1]));
+        System.out.println("Successful connection!");
+        pp.run();
+    }
+
+    public synchronized void handleStateChange() {
+
+    	if (state == null) {
+    		set_up_new_state_object();
+    	}
+    	
+        state.setFromMatchStateMessage(currentGameStateString);
+       	
+        if (state.isOurTurn()){
+        	System.out.println("-------------------------------------------------------");
+            
+            System.out.println("holeCards: " + Util.arrayToString(state.hole[state.seatTaken]));
+            System.out.println("boardCards: " + Util.arrayToString(state.board));
+            
+            try {
+	            if (state.roundIndex == 0) { // preflop
+	            	System.out.println("making preflop decision ...");
+	                double allInEquity = AllInEquityCalculator.getAllInEquity(state.hole[state.seatTaken], state.board, state.numPlayers-1);
+	                System.out.println("allInEquity: " + allInEquity);
+		            
+	            	if (allInEquity > 1/(double)state.numPlayers) {
+	            		System.out.println("raise ...");
+	            		sendRaise();
+	            	}
+	            	
+	            	else if (allInEquity > 0.20) {
+	            		System.out.println("call ...");
+	            		sendCall();
+	            	}
+	            	
+	            	else {
+	            		System.out.println("fold ...");
+	            		sendFold();
+	            	}
+	            }
+	            
+	            else { // postflop
+	            	System.out.println("making postflop decision ...");
+	            	DecisionNode node = new DecisionNode (true);
+	            	for (int i = 0; i < 1000; i++) {
+	            		GameState gameState = convertClientRingDynamics(state);
+	            		node.eval(gameState, false);
+	            	}
+	            	
+	            	if (node.getFoldChild().getExpectedValue() >= node.getCheckCallChild().getExpectedValue() &&
+	            		node.getFoldChild().getExpectedValue() >= node.getBetRaiseChild().getExpectedValue()) {
+	            		System.out.println("fold ..."); 
+	            		sendFold();
+	            	}
+	            	
+	            	else if (node.getCheckCallChild().getExpectedValue() >= node.getFoldChild().getExpectedValue() &&
+		            		node.getCheckCallChild().getExpectedValue() >= node.getBetRaiseChild().getExpectedValue()) {
+	            		System.out.println("call ..."); 
+	            		sendCall();
+		            }
+	            
+	            	else if (node.getBetRaiseChild().getExpectedValue() >= node.getFoldChild().getExpectedValue() &&
+		            		node.getBetRaiseChild().getExpectedValue() >= node.getCheckCallChild().getExpectedValue()) {
+	            		System.out.println("raise ..."); 
+	            		sendRaise();
+		            }
+	            	
+	            	else {
+	            		System.out.println("ERROR: nothing done ...");
+	            	}
+	            	
+				}
+            }
+            catch (Exception e) {
+				e.printStackTrace();
+			}
+	    }
+        
+        else 
+        	System.out.println("nothing to do ...");
+    }
+    
+    private void set_up_new_state_object() {
+    	ClientRingStateParser crsp = new ClientRingStateParser();
+		crsp.parseMatchStateMessage(currentGameStateString);
+		MatchType mt = new MatchType(LimitType.LIMIT, false, 8000, 1000);
+		CONSTANT.PLAYER_COUNT = crsp.numPlayers;
+		CONSTANT.AGGRESSIVE_PREFLOP = new double[crsp.numPlayers];
+		CONSTANT.AGGRESSIVE_RAISE = new double[crsp.numPlayers];
+		for(int i = 0; i < crsp.numPlayers; i++) {
+			CONSTANT.AGGRESSIVE_PREFLOP[i] = CONSTANT.A_PREFLOP;
+			CONSTANT.AGGRESSIVE_RAISE[i] = CONSTANT.A_RAISE;
+		}
+		state = new MyClientRingDynamics(crsp.numPlayers, mt, crsp);
+		state.setParser(crsp);
+    }
+    
+    private GameState convertClientRingDynamics (MyClientRingDynamics clientRingDynamics) {
+		GameState gameState = new GameState();
+		gameState.setBoardCards(clientRingDynamics.board);
+		int maxBetsizeThisRound = 0;
+		// TODO: maxBetsizeThisRound muss aus clientRingDynamics berechnet werden
+		gameState.setMaxBetsizeThisRound(maxBetsizeThisRound);
+		
+		Hero hero = new Hero(clientRingDynamics.hole[clientRingDynamics.seatTaken]);
+		hero.setInvested(clientRingDynamics.inPot[clientRingDynamics.seatTaken]);
+		hero.setFirstToAct(true);
+		
+		LinkedList<Player> players = new LinkedList<Player>();
+		players.add(hero);
+
+		int potsize = 0;
+		for (int i = 0; i < clientRingDynamics.playerCount; i++) {
+			potsize += clientRingDynamics.inPot[i];
+			if (i != clientRingDynamics.seatTaken) {
+				Opponent opponent = new Opponent();
+				opponent.setInvested(clientRingDynamics.inPot[i]);
+				// TODO: setInvestedThisRound muss aus clientRingDynamics berechnet werden
+				opponent.setInvestedThisRound(0);
+				players.add(opponent);
+			}
+		}
+		gameState.setPotsize(potsize);
+		gameState.setPlayers(players);
+		gameState.setPlayersToAct(players.size());
+		gameState.initUnusedCards();
+		
+		for (Player player : gameState.getPlayers()) {
+			if (player instanceof Opponent)
+				((Opponent) player).guessHoleCards(gameState);
+		}
+		
+		
+		return gameState;
+    }
+}

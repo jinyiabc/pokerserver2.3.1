@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 35
+/svn/bot_2/!svn/ver/6/src/ke/client
+END
+RoundFinisher.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/bot_2/!svn/ver/1/src/ke/client/RoundFinisher.java
+END
+IStateChangeListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/bot_2/!svn/ver/1/src/ke/client/IStateChangeListener.java
+END
+ClientRingDynamics.java
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/bot_2/!svn/ver/1/src/ke/client/ClientRingDynamics.java
+END
+ClientRingStateParser.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/bot_2/!svn/ver/1/src/ke/client/ClientRingStateParser.java
+END

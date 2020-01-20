@@ -1,0 +1,55 @@
+package mysrc.search;
+
+import java.util.ArrayList;
+
+import mysrc.Util;
+import mysrc.handevaluator.HandRank;
+import ca.ualberta.cs.poker.free.dynamics.Card;
+
+public class Opponent extends Player {
+
+	// TODO: Karten werden zur Zeit zufällig ausgewählt. Hier wäre es besser den Gegner aufgrund seines Verhaltens auf eine Range von Karten zu setzen und daraus die Karten (evt. auch mit gewichteten Wahrscheinlichkeiten) auszuwählen.
+	public ArrayList<Card> guessHoleCards (GameState gameState) {
+		if (holeCards == null) {
+			holeCards = new ArrayList<Card>();
+			holeCards.add(Util.getAndRemoveRandomCardFromList(gameState.getUnusedCards()));
+			holeCards.add(Util.getAndRemoveRandomCardFromList(gameState.getUnusedCards()));
+		}
+		
+		else throw new RuntimeException("Holecards wurden schon zugeteilt");
+		return null;
+	}
+	
+	public DecisionTriple getDecisionTriple (GameState gameState) {
+		if (gameState.getMaxBetsizeThisRound() == 4)
+			return new DecisionTriple(0.0, 1.0, 0.0);
+		
+		HandRank handRank = AllInEquityCalculator.getHandRank(holeCards, gameState.getBoardCards());
+    	switch (handRank.getRank()) {
+	    	case HIGH: 
+	    		return new DecisionTriple(0.4, 0.6, 0.0);
+	    		
+	    	case PAIR: 
+	    		return new DecisionTriple(0.0, 0.7, 0.3);
+	    		
+	    	default: 
+	    		return new DecisionTriple(0.0, 0.2, 0.8);
+    	}
+		
+//       double allInEquity = AllInEquityCalculator.getAllInEquity(holeCards, gameState.getBoardCards(), gameState.getPlayers().size()-1);
+//
+//    	if (allInEquity > 1/(double)gameState.getPlayers().size()) {
+//    		return new DecisionTriple(0.0, 0.0, 1);
+//    	}
+//    	
+//    	else if (allInEquity > 0.20) {
+//    		return new DecisionTriple(0.0, 1, 0.0);
+//    	}
+//    	
+//    	else {
+//    		return new DecisionTriple(1, 0.0, 0.0);
+//    	}
+		
+		
+	}
+}

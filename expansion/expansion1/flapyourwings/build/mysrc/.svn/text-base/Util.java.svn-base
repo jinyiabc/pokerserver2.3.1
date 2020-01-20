@@ -1,0 +1,57 @@
+package mysrc;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import ca.ualberta.cs.poker.free.dynamics.Card;
+
+public class Util {
+	
+	private static Random random = new Random();
+	
+	public static String arrayToString (Object[] array) {
+		StringBuilder stringBuilder = new StringBuilder();
+		boolean firstElement = true;
+		for (Object object : array) {
+			if (firstElement) {
+				stringBuilder.append("[");
+				stringBuilder.append(object);
+				firstElement = false;
+			}
+			
+			else {
+				stringBuilder.append(", " + object);
+			}
+		}
+		
+		stringBuilder.append("]");
+		
+		return stringBuilder.toString();
+	}
+	
+	
+    /**
+     * Entfernt zufällig eine Karte aus einer Liste von Karten und gibt diese Karte zurück.
+     * 
+     * @param cardList Liste von Karten
+     * @return die Karte, die zufällig aus der Liste ausgewählt wurde
+     */
+    public static Card getAndRemoveRandomCardFromList (List<Card> cardList) {
+    	int randomCardIndex = random.nextInt(cardList.size());
+		Card card = cardList.get(randomCardIndex);
+		cardList.remove(randomCardIndex);
+		return card;
+    }
+    
+    /**
+     * Initiallisiert den Stapel von Karten mit allen möglichen Karten.
+     */
+    public static ArrayList<Card> initUnusedCardsCards () {
+    	ArrayList<Card> unusedCards = new ArrayList<Card>();
+    	for (Card.Rank rank : Card.Rank.values())
+    		for (Card.Suit suit : Card.Suit.values())
+    			unusedCards.add(new Card (rank, suit));
+    	return unusedCards;
+    }
+}

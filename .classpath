@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="examples/academy25client"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="bots/nolimitrandomclient.jar"/>
+	<classpathentry kind="lib" path="bots/randomclient.jar"/>
+	<classpathentry kind="lib" path="dist/pokerserver.jar"/>
+	<classpathentry kind="lib" path="examples/nolimitrandomclient/pokerserver.jar"/>
+	<classpathentry kind="lib" path="examples/randomclient/pokerserver.jar"/>
+	<classpathentry kind="lib" path="examples/server/pokerserver.jar"/>
+	<classpathentry kind="lib" path="thirdparty/activation.jar"/>
+	<classpathentry kind="lib" path="thirdparty/mailapi.jar"/>
+	<classpathentry kind="lib" path="thirdparty/meerkat-api.jar"/>
+	<classpathentry kind="lib" path="thirdparty/smtp.jar"/>
+	<classpathentry kind="output" path="build"/>
+</classpath>

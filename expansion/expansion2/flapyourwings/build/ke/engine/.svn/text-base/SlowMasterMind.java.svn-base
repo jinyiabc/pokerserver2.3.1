@@ -1,0 +1,56 @@
+package ke.engine;
+
+import java.security.SecureRandom;
+
+import ke.client.ClientRingDynamics;
+import ke.data.Action;
+
+public class SlowMasterMind extends MasterMind{
+	 
+
+    DenkThread denken;
+	/**
+	 * Standard Action is CALL, After a random time of 0-5 secs it returns a random based decision (DenkThread). 
+     * Analyses the sithuation. And stores a random decission in 
+	 * currently_best_action. 
+	 * @param state_of_the_world
+	 */
+	public void think_about(ClientRingDynamics state_of_the_world){
+
+        currently_best_action = Action.CALL;
+        denken = new DenkThread(this);
+		System.out.println("I really have to carefully consider any contingency");
+
+        //starte Denkphase, z.B. Simulationen
+        denken.start();				         
+	}		    
+}
+
+// Denkphase, es fehlt eine Stop Methode!
+class DenkThread extends Thread { 
+
+    SecureRandom random = new SecureRandom();
+    MasterMind MyMind;    
+
+    public DenkThread(MasterMind Mind) {
+        MyMind = Mind;
+    }
+     
+    public void run() {
+
+        try {
+            sleep((long)(random.nextDouble()*5000.0));
+
+        } catch (InterruptedException e){
+        }
+        double random_number = random.nextDouble();
+        if (random_number<0.05){
+        	MyMind.currently_best_action = Action.FOLD;
+        } else if (random_number<0.55){
+        	MyMind.currently_best_action = Action.CALL;
+        } else {
+        	MyMind.currently_best_action = Action.RAISE;
+        }	
+     }  
+ }
+

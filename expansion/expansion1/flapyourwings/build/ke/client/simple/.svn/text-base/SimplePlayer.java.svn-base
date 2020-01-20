@@ -1,0 +1,71 @@
+package ke.client.simple;
+
+/*
+ * TestPlayer.java
+ *
+ * Created on April 21, 2006, 11:54 AM
+ */
+
+import java.net.InetAddress;
+
+import ke.engine.MasterMind;
+
+
+
+/**
+ * The actuall poker mathc participant which is called 
+ * from the shell-skript startme.sh/startme.bat . 
+ * 
+ * @author Alex, Immi, Kami
+ * @author FG KE
+ */
+public class SimplePlayer extends SimplePokerClient {
+	/** 
+	 * the backend Interface
+	 */
+    protected MasterMind backend;
+    
+    /**
+     * Initialize this player.
+     */
+    public SimplePlayer() {
+    	backend  = new MasterMind();
+    }
+
+    
+    /**
+     * sends the decided action to the server
+     */
+    public void reconsider_state_and_make_a_move() {
+    	
+    	System.out.println("Let me think.");
+ 
+    	backend.think_about(state);
+ 
+    	send_action(backend.getAction());
+
+    }
+    
+    /**
+     * sends the decided action to the server
+     */
+    public void reconsider_state() {
+    	
+    	System.out.println("So so.");
+    	
+    }
+    
+    
+    /**
+     * A function for startme.bat to call
+     */
+    public static void main(String[] args) throws Exception{
+        SimplePlayer pp = new SimplePlayer();
+        System.out.println("Attempting to connect to "+args[0]+" on port "+args[1]+"...");
+
+        pp.connect(InetAddress.getByName(args[0]), Integer.parseInt(args[1]));
+        System.out.println("Successful connection!");
+        pp.run();
+
+    }
+}

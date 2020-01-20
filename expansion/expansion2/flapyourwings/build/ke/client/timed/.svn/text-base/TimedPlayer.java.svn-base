@@ -1,0 +1,101 @@
+package ke.client.timed;
+
+
+import java.net.InetAddress;
+
+import ke.data.Action;
+import ke.engine.SlowMasterMind;
+import ke.timermgmt.ITimerFunction;
+
+
+/**
+ * The actuall poker mathc participant which is called 
+ * from the shell-skript startme.sh/startme.bat . 
+ * 
+ * @author Alex, Immi, Kami
+ * @author FG KE
+ */
+public class TimedPlayer extends TimedPokerClient {
+	/** 
+	 * the backend Interface
+	 */
+    protected SlowMasterMind backend;
+    
+    /**
+     * the function that should be called from within the timer
+     */
+    private ITimerFunction function;
+
+    /**
+     * Initialize this player.
+     */
+    public TimedPlayer() {
+    	backend  = new SlowMasterMind();
+        function = new ActionFunction(this);        
+    }
+    
+    /**
+     * start the thinkprocess and the timer, 
+     */
+    public void startTakeAction() {
+        backend.think_about(state);
+        timerManager.waitForDecision(function);
+    }
+
+    /**
+     * sends the decided action to the server
+     */
+    public void sendAction() {    	    	
+        try {
+            // the decision engine has to be capable of returning a decision at any time
+        	Action a = backend.getAction();
+        	/*
+        	if (CONSTANT.DEBUG) {
+        		System.out.println("Our decision: " + a + " Our Amount in: " + this.state.inPot[this.state.seatTaken]);
+        		System.out.print("Hole|Board:");
+        		for (Card c: this.state.hole[this.state.seatTaken]) {
+        			if (c!=null)
+        				System.out.print(c);
+        		}
+        		System.out.print("|");
+        		for (Card c: this.state.board) {
+        			if (c!=null)
+        				System.out.print(c + "|");
+        		}
+        		System.out.println();
+        	}
+            */
+        	
+        	if (a == Action.RAISE && state.canRaise(state.seatTaken))
+        		sendRaise();
+            else if (a == Action.RAISE || a == Action.CALL)
+            	sendCall();
+            else
+            	sendFold();
+        	
+        } catch(Exception e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    /** 
+     * what to do after our Action
+     */
+ 	public void afterTakeAction() {
+      //maybe cleanup Mastermind waste
+      //kill simulations etc..
+	}
+    
+    /**
+     * A function for startme.bat to call
+     */
+    public static void main(String[] args) throws Exception{
+        TimedPlayer pp = new TimedPlayer();
+        System.out.println("Attempting to connect to "+args[0]+" on port "+args[1]+"...");
+
+        pp.connect(InetAddress.getByName(args[0]), Integer.parseInt(args[1]));
+        System.out.println("Successful connection!");
+        pp.run();
+
+    }
+}

@@ -1,0 +1,74 @@
+package mysrc.hha;
+
+import java.text.NumberFormat;
+
+/**
+ * @author Markus Zopf
+ *
+ */
+public class StatisticEntry {
+	protected static NumberFormat nf = NumberFormat.getInstance();
+
+	private int foldCount = 0;
+	private int foldAhead = 0;
+	private int foldBehind = 0;
+	
+	private int checkCallCount = 0;
+	private int checkCallAhead = 0;
+	private int checkCallBehind = 0;
+	
+	private int betRaiseCount = 0;
+	private int betRaiseAhead = 0;
+	private int betRaiseBehind = 0;
+	
+	public void addFold (boolean ahead, boolean behind) {
+		foldCount++;
+		if (ahead)
+			foldAhead++;
+		if (behind)
+			foldBehind++;
+	}
+	
+	public void addCheckCall (boolean ahead, boolean behind) {
+		checkCallCount++;
+		if (ahead)
+			checkCallAhead++;
+		if (behind)
+			checkCallBehind++;
+	}
+	
+	public void addBetRaise (boolean ahead, boolean behind) {
+		betRaiseCount++;
+		if (ahead)
+			betRaiseAhead++;
+		if (behind)
+			betRaiseBehind++;
+	}
+
+	/**
+	 * @return einen String mit absoluten Werten, die der Eintrag zur Zeit hat
+	 */
+	public String toCountString () {
+		return "("+ foldCount + " [" + foldAhead + ", " + foldBehind + "], " + 
+		checkCallCount + " [" + checkCallAhead + ", " + checkCallBehind + "], " + 
+		betRaiseCount + " [" + betRaiseAhead + ", " + betRaiseBehind + "])";
+	}
+	
+	/**
+	 * @return einen String mit prozentualen Werten, die der Eintrag zur Zeit hat
+	 */
+	public String toProbabilityString () {
+		nf.setMaximumFractionDigits(2);
+		return "("+ nf.format(foldCount/(double)getCountSum ()) + " [" + nf.format(foldAhead/(double)(foldAhead+foldBehind)) + ", " + nf.format(foldBehind/(double)(foldAhead+foldBehind)) + "], " + 
+		nf.format(checkCallCount/(double)getCountSum ()) + " [" + nf.format(checkCallAhead/(double)(checkCallAhead+checkCallBehind)) + ", " + nf.format(checkCallBehind/(double)(checkCallAhead+checkCallBehind)) + "], " + 
+		nf.format(betRaiseCount/(double)getCountSum ()) + " [" + nf.format(betRaiseAhead/(double)(betRaiseAhead+betRaiseBehind)) + ", " + nf.format(betRaiseBehind/(double)(betRaiseAhead+betRaiseBehind)) + "])";
+	}
+	
+	
+	/**
+	 * @return die Summe, der zur Zeit gespeicherten Werte
+	 */
+	public int getCountSum () {
+		return foldCount + checkCallCount + betRaiseCount;
+	}
+}

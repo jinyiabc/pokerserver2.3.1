@@ -1,0 +1,26 @@
+2020年1月20日 下午1:34:56
+Queued Matches
+server:/127.0.0.1 port:0 card file: data/cards/limittest0 name:limittest0.allineq_player.Random1.flapyourwings resultFile:data/results/limittest0.allineq_player.Random1.flapyourwings.res logFile:data/results/limittest0.allineq_player.Random1.flapyourwings.log serverLogFile:data/serverlog/limittest0.allineq_player.Random1.flapyourwings.srv timePerHand:7000 numHands:1000 numCards:11
+BotTarFile allineq_player bots\allineq_player.jar allineq_player\  WINDOWS LOCALWINDOWS
+BotTarFile Random1 bots\randomclient.jar randomclient\  WINDOWS LOCALWINDOWS
+BotTarFile flapyourwings bots\flapyourwings.jar flapyourwings\  WINDOWS LOCALWINDOWS
+no machines yet
+
+server:/127.0.0.1 port:0 card file: data/cards/limittest0 name:limittest0.Random1.flapyourwings.allineq_player resultFile:data/results/limittest0.Random1.flapyourwings.allineq_player.res logFile:data/results/limittest0.Random1.flapyourwings.allineq_player.log serverLogFile:data/serverlog/limittest0.Random1.flapyourwings.allineq_player.srv timePerHand:7000 numHands:1000 numCards:11
+BotTarFile Random1 bots\randomclient.jar randomclient\  WINDOWS LOCALWINDOWS
+BotTarFile flapyourwings bots\flapyourwings.jar flapyourwings\  WINDOWS LOCALWINDOWS
+BotTarFile allineq_player bots\allineq_player.jar allineq_player\  WINDOWS LOCALWINDOWS
+no machines yet
+
+Running Matches
+server:/127.0.0.1 port:64558 card file: data/cards/limittest0 name:limittest0.flapyourwings.allineq_player.Random1 resultFile:data/results/limittest0.flapyourwings.allineq_player.Random1.res logFile:data/results/limittest0.flapyourwings.allineq_player.Random1.log serverLogFile:data/serverlog/limittest0.flapyourwings.allineq_player.Random1.srv timePerHand:7000 numHands:1000 numCards:11
+BotTarFile flapyourwings bots\flapyourwings.jar flapyourwings\  WINDOWS LOCALWINDOWS
+BotTarFile allineq_player bots\allineq_player.jar allineq_player\  WINDOWS LOCALWINDOWS
+BotTarFile Random1 bots\randomclient.jar randomclient\  WINDOWS LOCALWINDOWS
+127.0.0.1 expansion\expansion2\ WINDOWS
+127.0.0.1 expansion\expansion2\ WINDOWS
+127.0.0.1 expansion\expansion1\ WINDOWS
+
+Hand Number:990
+Available Machines:0
+Available Machines:0

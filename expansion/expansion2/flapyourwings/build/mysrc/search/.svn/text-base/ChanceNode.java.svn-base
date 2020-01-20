@@ -1,0 +1,44 @@
+package mysrc.search;
+
+
+public class ChanceNode extends Node {
+
+	private Node child;
+
+	public ChanceNode () {
+		this.nodeID = currentNodeCount++;
+		this.expectedValue = 0.0;
+	}
+	
+	public double eval (GameState gameState, boolean debug) {
+		if (debug) System.out.println("ChanceNode: " + gameState.toString());
+		runs++;
+		gameState.setMaxBetsizeThisRound(0);
+		gameState.setPlayersToAct(gameState.getPlayers().size());
+		gameState.rotateToRoundstartState();
+		gameState.resetInvestedThisRound();
+		gameState.dealNextStreet();
+		
+		if (child == null)
+			child = new DecisionNode(gameState.isHeroNextToAct());
+		
+		return expectedValue = ((expectedValue * (runs-1)) + child.eval(gameState, debug)) / (double)runs;
+	}
+	
+	public String toGraphvizString (int depth) {
+		String returnValue = new String();
+		nf.setMaximumFractionDigits(2);
+		
+		if (depth == 0)
+			return this.nodeID + " [style = filled, fillcolor = gold, shape=diamond]\n";
+		
+		returnValue += this.nodeID + " [style = filled, fillcolor = gold]\n";
+		
+		if (child != null) {
+			returnValue += this.nodeID + " -> " + child.getNodeID() + " [label=\"chance ("+nf.format(child.getExpectedValue())+"|" + child.getRuns() +")\"]\n";
+			returnValue += child.toGraphvizString(depth - 1);
+		}
+		
+		return returnValue;
+	}
+}

@@ -1,0 +1,6 @@
+
+C:\Users\yijin\Desktop\bot\pokerserver2.3.1\expansion\expansion1\randomclient>IF "64558" == "" GOTO ERROR 
+
+C:\Users\yijin\Desktop\bot\pokerserver2.3.1\expansion\expansion1\randomclient>java -cp meerkat-api.jar;pokerserver.jar ca.ualberta.cs.poker.free.client.RandomPokerClient 127.0.0.1 64558 
+Attempting to connect to 127.0.0.1 on port 64558...
+Successful connection!

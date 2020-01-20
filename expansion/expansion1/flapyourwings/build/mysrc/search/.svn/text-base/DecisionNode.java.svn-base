@@ -1,0 +1,150 @@
+package mysrc.search;
+
+import java.text.NumberFormat;
+
+public class DecisionNode extends Node {
+
+	private Node foldChild;
+	private Node checkCallChild;
+	private Node betRaiseChild;
+	private boolean heroActing;
+
+	public DecisionNode (boolean heroActing) {
+		this.nodeID = currentNodeCount++;
+		this.heroActing = heroActing;
+	}
+	
+	public double eval (GameState gameState, boolean debug) {
+		if (debug) System.out.println("DecisionNode: " + gameState.toString());
+		runs++;
+		switch(gameState.getPlayers().getFirst().getDecisionTriple(gameState).getDecision()) {
+			case FOLD:
+				if (debug) System.out.println("fold ...");
+				gameState.currentOpponentFolds();
+				foldChild = initChild(foldChild, gameState);
+				foldChild.eval(gameState, debug);
+				return updateExpectedValue ();
+				
+			case CHECK_CALL:
+				if (debug) System.out.println("check/call ...");
+				gameState.currentOpponentCheckCalls();
+				gameState.rotateOpponents();
+				checkCallChild = initChild(checkCallChild, gameState);
+				checkCallChild.eval(gameState, debug);
+				return updateExpectedValue ();
+				
+			case BET_RAISE:
+				if (debug) System.out.println("bet/raise ...");
+				gameState.currentOpponentBetRaises();
+				gameState.rotateOpponents();
+				betRaiseChild = initChild(betRaiseChild, gameState);
+				betRaiseChild.eval(gameState, debug);
+				return updateExpectedValue ();
+		}
+		
+		throw new RuntimeException();
+	}
+	
+	private Node initChild (Node child, GameState gameState) {
+		if (child == null) {
+			if (gameState.getPlayers().size() == 1)
+				child = new LeafNode();
+			
+			else if (!gameState.isHeroStillInGame())
+				child = new LeafNode();
+			
+			else if (gameState.getPlayersToAct() == 0) {
+				
+					if (gameState.getBoardCards().size() == 5)
+						child = new LeafNode();
+					else 
+						child = new ChanceNode();
+			}
+			
+			else if (child == null)
+				child = new DecisionNode(gameState.isHeroNextToAct());
+		}
+		
+		return child;
+	}
+
+	public Node getFoldChild() {
+		return foldChild;
+	}
+
+	public Node getCheckCallChild() {
+		return checkCallChild;
+	}
+
+	public Node getBetRaiseChild() {
+		return betRaiseChild;
+	}
+	
+	public double updateExpectedValue () {
+		if (heroActing) {
+			this.expectedValue = Double.NEGATIVE_INFINITY;
+			if (foldChild != null && foldChild.expectedValue != null && foldChild.expectedValue > this.expectedValue)
+				this.expectedValue = foldChild.expectedValue;
+			if (checkCallChild != null && checkCallChild.expectedValue != null && checkCallChild.expectedValue > this.expectedValue)
+				this.expectedValue = checkCallChild.expectedValue;
+			if (betRaiseChild != null && betRaiseChild.expectedValue != null && betRaiseChild.expectedValue > this.expectedValue)
+				this.expectedValue = betRaiseChild.expectedValue;
+		}
+		
+		else {
+			this.expectedValue = 0.0;
+			if (foldChild != null && foldChild.expectedValue != null)
+				this.expectedValue += foldChild.expectedValue * foldChild.runs;
+			if (checkCallChild != null && checkCallChild.expectedValue != null)
+				this.expectedValue += checkCallChild.expectedValue * checkCallChild.runs;
+			if (betRaiseChild != null && betRaiseChild.expectedValue != null)
+				this.expectedValue += betRaiseChild.expectedValue * betRaiseChild.runs;
+			
+			this.expectedValue = this.expectedValue / (double)runs;
+		}
+		
+		return this.expectedValue;
+	}
+
+	public String toGraphvizString (int depth) {
+		String returnValue = new String();
+		nf.setMaximumFractionDigits(2);
+		
+		if (depth == 0) {
+			if (heroActing)
+				return this.nodeID + " [style = filled, fillcolor = red, shape=diamond]\n";
+			else
+				return this.nodeID + " [shape=diamond]\n";
+		}
+		
+		if (heroActing)
+			returnValue += this.nodeID + " [style = filled, fillcolor = red]\n";
+		
+		if (foldChild != null) {
+			returnValue += this.nodeID + " -> " + foldChild.getNodeID() + " [label=\"fold ("+nf.format(foldChild.getExpectedValue())+"|" + foldChild.getRuns() + ")\"]\n";
+			returnValue += foldChild.toGraphvizString(depth-1);
+		}
+		
+		else {
+			returnValue += this.nodeID + " -> " + this.nodeID + " [label=fold]\n";
+		}
+		
+		if (checkCallChild != null) {
+			returnValue += this.nodeID + " -> " + checkCallChild.getNodeID() + " [label=\"checkCall ("+nf.format(checkCallChild.getExpectedValue())+"|" + checkCallChild.getRuns() +")\"]\n";
+			returnValue += checkCallChild.toGraphvizString(depth-1);
+		}
+		else {
+			returnValue += this.nodeID + " -> " + this.nodeID + " [label=checkCall]\n";
+		}
+		
+		if (betRaiseChild != null) {
+			returnValue += this.nodeID + " -> " + betRaiseChild.getNodeID() + " [label=\"betRaise ("+nf.format(betRaiseChild.getExpectedValue())+"|" + betRaiseChild.getRuns() +")\"]\n";
+			returnValue += betRaiseChild.toGraphvizString(depth-1);
+		}
+		else {
+			returnValue += this.nodeID + " -> " + this.nodeID + " [label=betRaise]\n";
+		}
+		
+		return returnValue;
+	}
+}

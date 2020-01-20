@@ -1,0 +1,10 @@
+package mysrc.hha;
+
+/**
+ * @author Markus Zopf
+ *
+ */
+public enum Decision {
+
+	FOLD, CHECK_CALL, BET_RAISE;
+}
