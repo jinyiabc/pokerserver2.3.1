@@ -5,7 +5,7 @@ PLAYER_CLASS=PlugInOpponent
 BOT_PLAYER_CLASS=TCPPlugin
 
 # put the path to your jar file here (relative to application root)
-PLAYER_JAR_FILE=data/bots/aaaibot.jar
+# PLAYER_JAR_FILE=data/bots/aaaibot.jar
 
 # Your Bot's name:
 PLAYER_NAME=AAAIBot
@@ -14,8 +14,8 @@ PLAYER_NAME=AAAIBot
 AI_NAME=AAAIBot
 
 # Options for your Bot:
-DEBUG=true
-RANDOM_SEED=31313
-ALWAYS_CALL_MODE=false
-BOTDIR=examples\randomclient
+# DEBUG=true
+# RANDOM_SEED=31313
+# ALWAYS_CALL_MODE=false
+# BOTDIR=examples\randomclient
 NO_LIMIT=false
